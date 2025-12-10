@@ -1,0 +1,78 @@
+.section {
+  padding: 5rem 0;
+  background: #0c0f16;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2.2rem;
+  padding: 0 2rem;
+}
+
+.card {
+  position: relative;
+  background: linear-gradient(145deg, #0f1624, #1a2333);
+  border-radius: 18px;
+  padding: 2.2rem 1.8rem;
+  text-align: center;
+  box-shadow: 0 0 18px rgba(0, 255, 150, 0.15),
+              inset 0 0 25px rgba(0, 255, 150, 0.05);
+  transition: 0.35s ease-in-out;
+  overflow: hidden;
+  backdrop-filter: blur(4px);
+}
+
+/* Neon Glow Border */
+.glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  padding: 2px;
+  background: linear-gradient(120deg, #00ffc6, #00aaff, #8e2de2, #00ffc6);
+  background-size: 300% 300%;
+  animation: glowMove 6s linear infinite;
+  z-index: -1;
+}
+
+@keyframes glowMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.card:hover {
+  transform: translateY(-10px) scale(1.03);
+  box-shadow: 0 0 25px rgba(0, 255, 200, 0.3);
+}
+
+.imageWrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.3rem;
+}
+
+.image {
+  width: 130px;
+  height: 130px;
+  filter: drop-shadow(0 0 8px #00ffd5);
+  transition: 0.3s ease;
+}
+
+.card:hover .image {
+  filter: drop-shadow(0 0 15px #00ffea);
+  transform: scale(1.06);
+}
+
+.title {
+  font-size: 1.5rem;
+  color: #00ffe0;
+  margin-bottom: 0.8rem;
+  font-weight: 700;
+}
+
+.text {
+  color: #c7d0e0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
