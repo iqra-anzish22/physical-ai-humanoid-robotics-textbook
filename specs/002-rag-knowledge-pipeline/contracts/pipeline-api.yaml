@@ -1,0 +1,309 @@
+openapi: 3.0.0
+info:
+  title: RAG Knowledge Pipeline API
+  description: API for managing the RAG knowledge pipeline operations
+  version: 0.1.0
+paths:
+  /pipeline/run:
+    post:
+      summary: Run the complete RAG pipeline
+      description: Execute the full pipeline from website crawling to Qdrant storage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                website_url:
+                  type: string
+                  description: URL of the book website to process
+                  example: "http://localhost:3000/physical-ai-humanoid-robotics-textbook/"
+                chunk_size:
+                  type: integer
+                  description: Size of text chunks for embedding
+                  default: 1000
+                chunk_overlap:
+                  type: integer
+                  description: Overlap between chunks
+                  default: 200
+                collection_name:
+                  type: string
+                  description: Qdrant collection name
+                  default: "rag_embedding"
+      responses:
+        '200':
+          description: Pipeline completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  documents_processed:
+                    type: integer
+                    example: 45
+                  embeddings_generated:
+                    type: integer
+                    example: 120
+                  completion_time:
+                    type: string
+                    example: "01:23:45"
+        '400':
+          description: Invalid input parameters
+        '500':
+          description: Internal server error during pipeline execution
+  /functions/get-all-urls:
+    post:
+      summary: Get all URLs from the specified website
+      description: Fetch all accessible URLs from the book website
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                base_url:
+                  type: string
+                  description: Base URL to crawl
+                  example: "http://localhost:3000/physical-ai-humanoid-robotics-textbook/"
+      responses:
+        '200':
+          description: List of URLs retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  urls:
+                    type: array
+                    items:
+                      type: string
+                  count:
+                    type: integer
+        '400':
+          description: Invalid URL provided
+  /functions/extract-text-from-url:
+    post:
+      summary: Extract text from a specific URL
+      description: Extract text content from the HTML/PDF content of a URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  description: URL to extract text from
+      responses:
+        '200':
+          description: Text extracted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: string
+                  title:
+                    type: string
+        '400':
+          description: Invalid URL or unable to extract content
+  /functions/chunk-text:
+    post:
+      summary: Chunk text into smaller pieces
+      description: Split large text into smaller chunks with overlap
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                  description: Text to chunk
+                chunk_size:
+                  type: integer
+                  description: Size of each chunk
+                  default: 1000
+                chunk_overlap:
+                  type: integer
+                  description: Overlap between chunks
+                  default: 200
+      responses:
+        '200':
+          description: Text chunked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chunks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        content:
+                          type: string
+                        chunk_index:
+                          type: integer
+  /functions/embed:
+    post:
+      summary: Generate embeddings for text chunks
+      description: Create vector embeddings using Cohere API
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                chunks:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      content:
+                        type: string
+      responses:
+        '200':
+          description: Embeddings generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  embeddings:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        vector:
+                          type: array
+                          items:
+                            type: number
+  /functions/create-collection:
+    post:
+      summary: Create Qdrant collection
+      description: Create a collection named 'rag_embedding' in Qdrant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                collection_name:
+                  type: string
+                  description: Name of the collection to create
+                  default: "rag_embedding"
+      responses:
+        '200':
+          description: Collection created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+  /functions/save-chunk-to-qdrant:
+    post:
+      summary: Save chunk to Qdrant
+      description: Store a text chunk with its embedding in Qdrant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                chunk_id:
+                  type: string
+                  description: ID of the chunk
+                vector:
+                  type: array
+                  items:
+                    type: number
+                  description: Embedding vector
+                payload:
+                  type: object
+                  description: Metadata to store with the vector
+      responses:
+        '200':
+          description: Chunk saved to Qdrant successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+  /pipeline/status:
+    get:
+      summary: Get pipeline execution status
+      description: Retrieve the current status of pipeline execution
+      responses:
+        '200':
+          description: Current pipeline status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [idle, crawling, extracting, chunking, embedding, storing, completed, failed]
+                  progress:
+                    type: object
+                    properties:
+                      total_documents:
+                        type: integer
+                      processed_documents:
+                        type: integer
+                      current_stage:
+                        type: string
+                      timestamp:
+                        type: string
+                        format: date-time
+  /validation/run:
+    post:
+      summary: Run pipeline validation
+      description: Execute validation tests for the complete pipeline
+      responses:
+        '200':
+          description: Validation completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [success, failed]
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        test_name:
+                          type: string
+                        result:
+                          type: string
+                          enum: [passed, failed]
+                        details:
+                          type: string

@@ -1,0 +1,266 @@
+openapi: 3.0.3
+info:
+  title: Isolated On-Demand RAG Chatbot API
+  description: API for the isolated, privacy-first RAG chatbot that answers questions ONLY from user-provided text
+  version: 1.0.0
+  contact:
+    name: RAG Chatbot Team
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://rag-chatbot.example.com
+    description: Production server
+
+paths:
+  /api/v1/session:
+    post:
+      summary: Create a new session with user-provided text
+      description: Creates a new session, processes the provided text into chunks, and stores embeddings temporarily
+      operationId: create_session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+              properties:
+                text:
+                  type: string
+                  description: The text content provided by the user
+                  example: "Artificial intelligence is a wonderful field that combines computer science and cognitive science..."
+                chunk_size:
+                  type: integer
+                  description: Size of text chunks in tokens (default: 600)
+                  minimum: 500
+                  maximum: 800
+                  default: 600
+                overlap:
+                  type: integer
+                  description: Overlap between chunks in tokens (default: 100)
+                  minimum: 0
+                  maximum: 200
+                  default: 100
+      responses:
+        '201':
+          description: Session created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - session_id
+                  - chunk_count
+                  - status
+                properties:
+                  session_id:
+                    type: string
+                    format: uuid
+                    description: Unique identifier for the created session
+                    example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                  chunk_count:
+                    type: integer
+                    description: Number of text chunks created from the provided text
+                    example: 5
+                  status:
+                    type: string
+                    enum: [processing, completed]
+                    description: Current status of the session
+                    example: "completed"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Text content is required and cannot be empty"
+        '500':
+          description: Processing error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Failed to process text content"
+
+  /api/v1/session/{session_id}/query:
+    post:
+      summary: Submit a question for a specific session
+      description: Asks a question about the text provided in the session and returns an answer based only on that text
+      operationId: submit_query
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the session to query
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - question
+              properties:
+                question:
+                  type: string
+                  description: The question to ask about the provided text
+                  example: "What are the main benefits of artificial intelligence?"
+      responses:
+        '200':
+          description: Query processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - response
+                  - sources
+                  - processing_time
+                properties:
+                  response:
+                    type: string
+                    description: The generated response based only on the provided text
+                    example: "The main benefits of artificial intelligence include automation of repetitive tasks, improved decision-making capabilities, and enhanced data analysis."
+                  sources:
+                    type: array
+                    items:
+                      type: string
+                      format: uuid
+                    description: IDs of the text chunks used to generate the response
+                    example: ["a1b2c3d4-e5f6-7890-1234-567890abcdef"]
+                  processing_time:
+                    type: number
+                    format: float
+                    description: Time taken to process the query in seconds
+                    example: 2.34
+        '400':
+          description: Invalid question
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Question cannot be empty"
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Session not found or expired"
+        '500':
+          description: Processing error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Failed to process query"
+
+  /api/v1/session/{session_id}:
+    delete:
+      summary: Clean up a session
+      description: Explicitly deletes the session and all associated temporary data
+      operationId: delete_session
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the session to delete
+      responses:
+        '200':
+          description: Session cleaned up successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                properties:
+                  status:
+                    type: string
+                    description: Confirmation of successful cleanup
+                    example: "Session and associated data deleted"
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Session not found or already deleted"
+
+components:
+  schemas:
+    Session:
+      type: object
+      required:
+        - session_id
+        - chunk_count
+        - status
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the session
+        chunk_count:
+          type: integer
+          description: Number of text chunks created
+        status:
+          type: string
+          enum: [processing, completed]
+          description: Current status of the session
+        created_at:
+          type: string
+          format: date-time
+          description: When the session was created
+
+    QueryResponse:
+      type: object
+      required:
+        - response
+        - sources
+        - processing_time
+      properties:
+        response:
+          type: string
+          description: The generated response
+        sources:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of the text chunks used to generate the response
+        processing_time:
+          type: number
+          format: float
+          description: Time taken to process the query in seconds
