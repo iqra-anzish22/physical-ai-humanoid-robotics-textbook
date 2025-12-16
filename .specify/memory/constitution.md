@@ -1,55 +1,76 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report:
+- Version change: N/A (initial constitution) → 1.0.0
+- Added sections: Content Isolation, RAG Flow, Tech Stack, UI Requirements
+- Removed sections: None
+- Templates requiring updates: N/A
+- Follow-up TODOs: None
+-->
+# Isolated On-Demand RAG Chatbot Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### Content Isolation (NON-NEGOTIABLE)
+NEVER access, ingest, reference, or infer from full/existing book content. Responses ONLY from user-pasted/selected text. If no text provided → refuse to answer. Zero hallucinations, zero external knowledge. No persistence across queries or sessions.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### Strict RAG Flow Per Query
+Every query follows: User provides text + question → Chunk text (500–800 tokens, overlap) → Generate embeddings via Cohere → Store vectors TEMPORARILY in session-scoped Qdrant → Retrieve top-k chunks → Generate answer ONLY from retrieved chunks → Delete vectors after session.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### Technology Constraint Compliance
+NO OpenAI (SDK/keys) allowed. NO pre-ingestion of book content. NO storage/logging of user text. Use only free tiers. API keys via env vars. Core code must remain ≤1200 lines.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### Session-Based Processing
+All processing is isolated per session. Temporary vector storage that gets deleted after session. No cross-session data persistence. Each query is independent and self-contained.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### Accuracy and Grounding Standards
+≥95% grounded accuracy. Zero content leakage. <5s response time. Auditable isolation. Answers clearly show they are based only on the text the user provides.
 
-### [PRINCIPLE_6_NAME]
+### Privacy and Data Handling
+No user text persistence. No logging of user-provided content. Session-scoped temporary storage only. Strict privacy controls for user-provided text.
 
+## Technical Requirements
 
-[PRINCIPLE__DESCRIPTION]
+### Tech Stack Mandates
+- LLM: Cohere (embed-english-v3.0, command-r-plus or latest)
+- Backend: FastAPI
+- Vector DB: Qdrant Cloud (free, session-only)
+- DB: Neon Postgres (optional, metadata ONLY)
+- Frontend: Lightweight embeddable chatbot widget
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+### Performance Standards
+- Response time: <5 seconds per query
+- Accuracy: ≥95% grounded responses
+- Availability: High uptime for on-demand usage
+- Scalability: Handle concurrent user sessions
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### Security Requirements
+- Secure handling of API keys via environment variables
+- No exposure of user-provided text to external systems beyond immediate processing
+- Secure embedding generation and retrieval pipeline
+- Protected session data isolation
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+## Development Workflow
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### Code Quality Standards
+- Maximum 1200 lines of core code
+- Modular, well-documented components
+- Type safety enforcement
+- Comprehensive error handling
+
+### Testing Requirements
+- Unit tests for all core components
+- Integration tests for RAG pipeline
+- End-to-end tests for complete query flow
+- Privacy compliance verification tests
+
+### Review Process
+- Verify compliance with content isolation rules
+- Check for adherence to tech stack constraints
+- Confirm no data persistence violations
+- Validate performance requirements
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+All development and changes must comply with these constitutional principles. Any deviation from content isolation, tech stack constraints, or privacy requirements is prohibited. All PRs/reviews must verify compliance with non-negotiable principles. Complexity must be justified with clear benefits that don't compromise isolation or privacy.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2025-12-13 | **Last Amended**: 2025-12-13

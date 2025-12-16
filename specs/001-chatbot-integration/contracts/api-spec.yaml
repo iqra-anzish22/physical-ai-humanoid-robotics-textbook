@@ -1,0 +1,217 @@
+openapi: 3.0.0
+info:
+  title: AI Chatbot Integration API
+  description: API for integrating AI chatbot functionality with textbook frontend
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+paths:
+  /api/session/create:
+    post:
+      summary: Create a new chat session
+      description: Creates a new chat session for a user interaction
+      responses:
+        '200':
+          description: Session created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id:
+                    type: string
+                    description: Unique identifier for the session
+                  created_at:
+                    type: string
+                    format: date-time
+                    description: When the session was created
+                  expires_at:
+                    type: string
+                    format: date-time
+                    description: When the session expires
+                  status:
+                    type: string
+                    enum: [active]
+                    description: Current status of the session
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/session/{session_id}:
+    get:
+      summary: Check session status
+      description: Verify if a session is active or expired
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the session
+      responses:
+        '200':
+          description: Session status retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id:
+                    type: string
+                  status:
+                    type: string
+                    enum: [active, expired]
+                  expires_at:
+                    type: string
+                    format: date-time
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/chat/{session_id}:
+    post:
+      summary: Send a message to the chatbot
+      description: Send a user query to the AI chatbot within a session
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: The user's question or message
+                text_content:
+                  type: string
+                  description: The text content to analyze (optional, can be provided by frontend)
+              required:
+                - message
+      responses:
+        '200':
+          description: Response generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response:
+                    type: string
+                    description: The AI-generated response
+                  session_id:
+                    type: string
+                    description: Session identifier
+                  message_id:
+                    type: string
+                    description: Unique identifier for the message
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '410':
+          description: Session expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Processing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/process-text/{session_id}:
+    post:
+      summary: Process user-provided text for RAG
+      description: Process text content provided by user for retrieval-augmented generation
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text_content:
+                  type: string
+                  description: The text content to process
+                chunk_size:
+                  type: integer
+                  description: Size of text chunks (default: 600)
+                  default: 600
+              required:
+                - text_content
+      responses:
+        '200':
+          description: Text processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [processed]
+                  chunks_count:
+                    type: integer
+                    description: Number of text chunks created
+                  session_id:
+                    type: string
+                    description: Session identifier
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Processing failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: Error code
+        details:
+          type: object
+          description: Additional error details

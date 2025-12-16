@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Isolated RAG Chatbot</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Isolated RAG Chatbot</h1>
+            <div class="notice-banner">
+                <strong>Notice:</strong> Answers are based only on the text you provide.
+            </div>
+        </header>
+
+        <main>
+            <div class="input-section">
+                <label for="text-input">Enter your text:</label>
+                <textarea id="text-input" placeholder="Paste your text content here..."></textarea>
+                <button id="submit-text-btn">Submit Text</button>
+            </div>
+
+            <div class="chat-section">
+                <div id="chat-history"></div>
+                <div class="input-area">
+                    <input type="text" id="user-question" placeholder="Ask a question about your text...">
+                    <button id="ask-btn">Ask</button>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Privacy-focused RAG Chatbot - Your text is not stored or logged</p>
+        </footer>
+    </div>
+
+    <script src="/static/chatbot-widget.js"></script>
+    <script>
+        // Initialize the chatbot when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            RAGChatbot.init({
+                containerId: 'chat-section',
+                apiUrl: '/api/v1'
+            });
+        });
+    </script>
+</body>
+</html>
